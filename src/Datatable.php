@@ -1,331 +1,131 @@
 <?php
 
-namespace Datatables;
+namespace Esclaudio\Datatables;
 
 class Datatable
 {
-    const LEFT_JOIN  = 'LEFT';
-    const RIGHT_JOIN = 'RIGHT';
-    const INNER_JOIN = 'INNER';
-
     /**
      * PDO
      *
      * @var \PDO
      */
-    private $pdo;
+    protected $pdo;
 
     /**
-     * Table name
+     * Query
      *
-     * @var string
+     * @var Query
      */
-    private $table;
+    protected $query;
 
     /**
-     * Params
+     * Option
      *
-     * @var array
+     * @var Option
      */
-    private $params;
+    protected $option;
 
-    /**
-     * Columns
-     *
-     * @var array
-     */
-    private $columns = [];
-
-    /**
-     * Where all
-     *
-     * @var array
-     */
-    private $whereAll = [];
-
-    /**
-     * Where result
-     *
-     * @var array
-     */
-    private $whereResult = [];
-
-    /**
-     * Join
-     *
-     * @var array
-     */
-    private $joins = [];
-
-    public function __construct(\PDO $pdo, string $table, array $params)
+    public function __construct(\PDO $pdo, Query $query, array $request)
     {
         $this->pdo = $pdo;
-        $this->table = $table;
-        $this->params = $params;
+        $this->query = $query;
+        $this->option = new Option($request);
     }
 
-    public function addJoin(string $table, string $relation, string $type): self
+    public function sql(): string
     {
-        $this->joins[] = "$type JOIN {$table} ON {$relation}";
-        return $this;
+        $query = clone $this->query;
+
+        $params = $this->params($query);
+
+        $where = $this->filter($query, $params);
+        $order = $this->order($query);
+        $limit = $this->limit($query);
+
+        return (string)$query;
     }
 
-    public function addInnerJoin(string $table, string $relation): self
+    public function response(): array
     {
-        return $this->addJoin($table, $relation, self::INNER_JOIN);
-    }
+        $query = clone $this->query;
 
-    public function addLeftJoin(string $table, string $relation): self
-    {
-        return $this->addJoin($table, $relation, self::LEFT_JOIN);
-    }
+        $total = $this->pdo->query($query->getCountSql())->fetchColumn();
+        $filteredTotal = $this->pdo->query($query->getFilteredCountSql())->fetchColumn();
 
-    public function addRightJoin(string $table, string $relation): self
-    {
-        return $this->addJoin($table, $relation, self::RIGHT_JOIN);
-    }
+        $params = $this->params($query);
 
-    // public function addWhereAll($where): self
-    // {
-    //     $this->whereAll[] = $where;
-    //     return $this;
-    // }
+        $this->filter($query, $params);
+        $this->order($query);
+        $this->limit($query);
 
-    // public function addWhereResult($where): self
-    // {
-    //     $this->whereResult[] = $where;
-    //     return $this;
-    // }
+        $statement = $this->pdo->prepare($query);
+        
+        foreach ($params as $key => $param) {
+            $statement->bindParam($key, $param['value'], $param['type']);
+        }
 
-    public function addColumn(string $key, string $field = null, callable $formatter = null): self
-    {
-        $this->columns[] = [
-            'dt'        => $key,
-            'db'        => $field ?? $key,
-            'formatter' => $formatter
+        $statement->execute();
+        $data = $statement->fetchAll();
+
+        return [
+            'draw'            => $this->option->draw(),
+            'recordsTotal'    => (int)$total,
+            'recordsFiltered' => (int)$filteredTotal,
+            'data'            => $data,
         ];
-
-        return $this;
     }
 
-    public function getOutput(): array
+    private function params(Query $query): array
     {
-        return array(
-            'draw'            => (int)$this->params['draw'],
-            'recordsTotal'    => 0,
-            'recordsFiltered' => 0,
-            'data'            => []
-        );
+        $searchValue = $this->option->searchValue();
+        $fields = $query->getFields();
+        $params = [];
+
+        foreach ($this->option->columns() as $column) {
+            if ($column['searchable'] == 'true') {
+                $field = array_search($column['data'], $fields);
+
+                if ($field) {
+                    $params[':binding_' . count($params)] = [
+                        'field' => $field,
+                        'value' => '%'.$searchValue.'%',
+                        'type'  => \PDO::PARAM_STR,
+                    ];
+                }
+            }
+        }
+
+        return $params;
     }
 
-    // private static function data_output(array $columns, array $data)
-    // {
-    //     $out = [];
+    private function limit(Query $query): void
+    {
+        $query->limit($this->option->start(), $this->option->length());
+    }
 
-    //     for ($i=0, $ien=count($data) ; $i<$ien ; $i++) {
-    //         $row = [];
+    private function order(Query $query): void
+    {
+        $columns = $this->option->columns();
+        $fields = $query->getFields();
 
-    //         for ($j=0, $jen=count($columns) ; $j<$jen ; $j++) {
-    //             $column = $columns[$j];
+        foreach ($this->option->order() as $order) {
+            $column = $columns[$order['column']];
+            $field = array_search($column, $fields);
 
-    //             // Is there a formatter?
-    //             if (isset($column['formatter'])) {
-    //                 $row[ $column['dt'] ] = $column['formatter']($data[$i][ $column['dt'] ], $data[$i]);
-    //             } else {
-    //                 $row[ $column['dt'] ] = $data[$i][ $columns[$j]['dt'] ];
-    //             }
-    //         }
+            if ($field) {
+                if (strtolower($order['dir']) === 'desc') {
+                    $query->orderDesc($field);
+                } else {
+                    $query->order($field);
+                }
+            }
+        }
+    }
 
-    //         $out[] = $row;
-    //     }
-
-    //     return $out;
-    // }
-
-    // private function limit(array $params): string
-    // {
-    //     if (isset($params['start']) && $params['length'] != -1) {
-    //         return 'LIMIT ' . intval($params['start']) . ', ' . intval($params['length']);
-    //     }
-
-    //     return '';
-    // }
-
-    // private function order(array $params, array $columns): string
-    // {
-    //     if (isset($request['order']) && count($request['order'])) {
-    //         $orderBy = [];
-    //         $dtColumns = self::pluck($columns, 'dt');
-
-    //         for ($i=0, $ien=count($request['order']) ; $i<$ien ; $i++) {
-    //             // Convert the column index into the column data property
-    //             $columnIdx = intval($request['order'][$i]['column']);
-    //             $requestColumn = $request['columns'][$columnIdx];
-
-    //             $columnIdx = array_search($requestColumn['data'], $dtColumns);
-    //             $column = $columns[ $columnIdx ];
-
-    //             if ($requestColumn['orderable'] == 'true') {
-    //                 $dir = $request['order'][$i]['dir'] === 'asc' ?
-    //                     'ASC' :
-    //                     'DESC';
-
-    //                 $orderBy[] = $column['db'].' '.$dir;
-    //             }
-    //         }
-
-    //         return 'ORDER BY '.implode(', ', $orderBy);
-    //     }
-
-    //     return '';
-    // }
-
-    // private static function filter(array $request, array $columns, array &$bindings)
-    // {
-    //     $globalSearch = [];
-    //     $columnSearch = [];
-    //     $dtColumns = self::pluck($columns, 'dt');
-
-    //     if (isset($request['search']) && $request['search']['value'] != '') {
-    //         $str = $request['search']['value'];
-
-    //         for ($i=0, $ien=count($request['columns']) ; $i<$ien ; $i++) {
-    //             $requestColumn = $request['columns'][$i];
-    //             $columnIdx = array_search($requestColumn['data'], $dtColumns);
-    //             $column = $columns[ $columnIdx ];
-
-    //             if ($requestColumn['searchable'] == 'true') {
-    //                 $binding = self::bind($bindings, '%'.$str.'%', \PDO::PARAM_STR);
-    //                 $globalSearch[] = $column['db']." LIKE ".$binding;
-    //             }
-    //         }
-    //     }
-
-    //     // Individual column filtering
-    //     for ($i=0, $ien=count($request['columns']) ; $i<$ien ; $i++) {
-    //         $requestColumn = $request['columns'][$i];
-    //         $columnIdx = array_search($requestColumn['data'], $dtColumns);
-    //         $column = $columns[ $columnIdx ];
-
-    //         $str = $requestColumn['search']['value'];
-
-    //         if ($requestColumn['searchable'] == 'true' && $str != '') {
-    //             $binding = self::bind($bindings, '%'.$str.'%', \PDO::PARAM_STR);
-    //             $columnSearch[] = $column['db']." LIKE ".$binding;
-    //         }
-    //     }
-
-    //     // Combine the filters into a single string
-    //     $where = '';
-
-    //     if (count($globalSearch)) {
-    //         $where = '('.implode(' OR ', $globalSearch).')';
-    //     }
-
-    //     if (count($columnSearch)) {
-    //         $where = $where === '' ?
-    //             implode(' AND ', $columnSearch) :
-    //             $where .' AND '. implode(' AND ', $columnSearch);
-    //     }
-
-    //     return $where;
-    // }
-
-    // public static function for(\PDO $db, $table, array $columns, $whereResult, $whereAll, array $request)
-    // {
-    //     $bindings = [];
-
-    //     // Build the SQL query string from the request
-    //     $limit = self::limit($request, $columns);
-    //     $order = self::order($request, $columns);
-    //     $where = self::filter($request, $columns, $bindings);
-
-    //     if ($whereResult) {
-    //         $where .= $where? " AND $whereResult": $whereResult;
-    //     }
-
-    //     if ($whereAll) {
-    //         $where .= $where? " AND $whereAll": $whereAll;
-    //     }
-
-    //     if ($where) {
-    //         $where = "WHERE $where";
-    //     }
-
-    //     $fields = array_map(function ($column) {
-    //         return $column['db'] . ' AS ' . $column['dt'] ?: $column['db'];
-    //     }, $columns);
-
-    //     $sql = "
-	// 		SELECT SQL_CALC_FOUND_ROWS " . implode(", ", $fields) . "
-	// 		FROM $table
-	// 		$where
-	// 		$order
-	// 		$limit
-	// 	";
-
-    //     // Main query to actually get the data
-    //     $data = self::execute($db, $bindings, $sql);
-
-    //     // Data set length after filtering
-    //     $recordsFiltered = $db->query("SELECT FOUND_ROWS()")->fetchColumn();
-
-    //     // Total data set length
-    //     $recordsTotal = $db->query("SELECT COUNT(*) FROM $table" . ($whereAll? " WHERE $whereAll": ""))->fetchColumn();
-
-    //     return array(
-    //         "draw"            => (int)$request['draw'],
-    //         "recordsTotal"    => (int)$recordsTotal,
-    //         "recordsFiltered" => (int)$recordsFiltered,
-    //         "data"            => self::data_output($columns, $data)
-    //     );
-    // }
-
-    // private static function execute($db, array $bindings, $sql)
-    // {
-    //     $stmt = $db->prepare($sql);
-
-    //     // Bind parameters
-    //     foreach ($bindings as $binding) {
-    //         $stmt->bindValue($binding['key'], $binding['val'], $binding['type']);
-    //     }
-
-    //     // Execute
-    //     try {
-    //         $stmt->execute();
-    //     } catch (\PDOException $e) {
-    //         echo json_encode(array(
-    //             "error" => "An SQL error occurred: ".$e->getMessage()
-    //         ));
-
-    //         exit(0);
-    //     }
-
-    //     // Return all
-    //     return $stmt->fetchAll();
-    // }
-
-    // private static function bind(array &$a, $val, $type)
-    // {
-    //     $key = ':binding_'.count($a);
-
-    //     $a[] = array(
-    //         'key' => $key,
-    //         'val' => $val,
-    //         'type' => $type
-    //     );
-
-    //     return $key;
-    // }
-
-    // private function pluck(array $array, $prop)
-    // {
-    //     $out = [];
-
-    //     foreach ($array as $a) {
-    //         $out[] = $a[$prop];
-    //     }
-
-    //     return $out;
-    // }
+    private function filter(Query $query, array $params): void
+    {
+        foreach ($params as $key => $param) {
+            $query->where($param['field'] . ' LIKE ' . $key);
+        }
+    }
 }
