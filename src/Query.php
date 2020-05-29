@@ -107,13 +107,13 @@ class Query
 
     public function where(string $where): self
     {
-        $this->where[] = $where;
+        $this->where[] = " AND ($where)";
         return $this;
     }
 
-    public function setParameter(string $name, $value): self
+    public function orWhere(string $where): self
     {
-        $this->parameters[$name] = $value;
+        $this->where[] = " OR ($where)";
         return $this;
     }
 
@@ -189,7 +189,7 @@ class Query
     {
         if ( ! $this->where) return '';
         
-        return ' WHERE ' . implode(' AND ', $this->where);
+        return ' WHERE ' . ltrim('AND ', ltrim('OR ', implode('', $this->where)));
     }
 
     protected function getOrder(): string

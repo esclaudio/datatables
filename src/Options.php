@@ -2,7 +2,7 @@
 
 namespace Esclaudio\Datatables;
 
-class Option
+class Options
 {
     /**
      * Request

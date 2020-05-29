@@ -21,61 +21,77 @@ final class DatatablesTest extends TestCase
 
     public function testSimple(): void
     {
-        $query = (new Query('customers c'))
-            ->select([
-                'c.id'   => 'id',
-                'c.name' => 'name',
-                'c.age'  => 'age',
-                'u.name' => 'created_by_name',
-            ])
-            ->join('users u', 'c.created_by = u.id')
-            ->where('c.age > 25');
+        // $query = (new Query('customers c'))
+        //     ->select([
+        //         'c.id'   => 'id',
+        //         'c.name' => 'name',
+        //         'c.age'  => 'age',
+        //         'u.name' => 'created_by_name',
+        //     ])
+        //     ->join('users u', 'c.created_by = u.id')
+        //     ->where('c.age > 25');
         
-        $params = [
-            'draw' => '1',
-            'columns' => [
-                [
-                    'data'       => 'id',
-                    'searchable' => 'true',
-                    'orderable'  => 'true'
-                ],
-                [
-                    'data'       => 'name',
-                    'searchable' => 'true',
-                    'orderable'  => 'true'
-                ],
-                [
-                    'data'       => 'age',
-                    'searchable' => 'false',
-                    'orderable'  => 'true'
-                ],
-                [
-                    'data'       => 'created_by_name',
-                    'searchable' => 'true',
-                    'orderable'  => 'true'
-                ],
-            ],
-            'order' => [
-                [
-                    'column' => '0',
-                    'dir'    => 'asc',
-                ],
-                [
-                    'column' => '2',
-                    'dir'    => 'desc',
-                ],
-            ],
-            'start' => '0',
-            'lenght' => '5',
-            'search' => [
-                'value' => 'uno',
-                'regex' => 'false',
-            ]
-        ];
+        // $params = [
+        //     'draw' => '1',
+        //     'columns' => [
+        //         [
+        //             'data'       => 'id',
+        //             'searchable' => 'true',
+        //             'orderable'  => 'true',
+        //             'search'     => [
+        //                 'value' => '',
+        //                 'regex' => 'false',
+        //             ],
+        //         ],
+        //         [
+        //             'data'       => 'name',
+        //             'searchable' => 'true',
+        //             'orderable'  => 'true',
+        //             'search'     => [
+        //                 'value' => '',
+        //                 'regex' => 'false',
+        //             ],
+        //         ],
+        //         [
+        //             'data'       => 'age',
+        //             'searchable' => 'false',
+        //             'orderable'  => 'true',
+        //             'search'     => [
+        //                 'value' => '',
+        //                 'regex' => 'false',
+        //             ],
+        //         ],
+        //         [
+        //             'data'       => 'created_by_name',
+        //             'searchable' => 'true',
+        //             'orderable'  => 'true',
+        //             'search'     => [
+        //                 'value' => '',
+        //                 'regex' => 'false',
+        //             ],
+        //         ],
+        //     ],
+        //     'order' => [
+        //         [
+        //             'column' => '0',
+        //             'dir'    => 'asc',
+        //         ],
+        //         [
+        //             'column' => '2',
+        //             'dir'    => 'desc',
+        //         ],
+        //     ],
+        //     'start' => '0',
+        //     'lenght' => '5',
+        //     'search' => [
+        //         'value' => 'uno',
+        //         'regex' => 'false',
+        //     ]
+        // ];
 
-        $response = (new Datatable($this->pdo, $query, $params))->response();
-        var_dump($response);
-        die();
+        // $response = (new Datatable($this->pdo, $query, $params))->response();
+        // var_dump($response);
+        // die();
         // echo $datatable->sql();
         // die();
         // $datatable = new Datatable($this->pdo, 'customers', []);

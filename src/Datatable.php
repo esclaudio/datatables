@@ -2,73 +2,53 @@
 
 namespace Esclaudio\Datatables;
 
+use Esclaudio\Datatables\Contracts\Database;
+
 class Datatable
 {
     /**
      * PDO
      *
-     * @var \PDO
+     * @var \Esclaudio\Datatables\Contracts\Database
      */
-    protected $pdo;
+    protected $db;
 
     /**
      * Query
      *
-     * @var Query
+     * @var \Esclaudio\Datatables\Query
      */
     protected $query;
 
     /**
-     * Option
+     * Options
      *
-     * @var Option
+     * @var \Esclaudio\Datatables\Options
      */
-    protected $option;
+    protected $options;
 
-    public function __construct(\PDO $pdo, Query $query, array $request)
+    public function __construct(Database $db, Query $query, array $request)
     {
-        $this->pdo = $pdo;
+        $this->db = $db;
         $this->query = $query;
-        $this->option = new Option($request);
-    }
-
-    public function sql(): string
-    {
-        $query = clone $this->query;
-
-        $params = $this->params($query);
-
-        $where = $this->filter($query, $params);
-        $order = $this->order($query);
-        $limit = $this->limit($query);
-
-        return (string)$query;
+        $this->options = new Options($request);
     }
 
     public function response(): array
     {
         $query = clone $this->query;
 
-        $total = $this->pdo->query($query->getCountSql())->fetchColumn();
-        $filteredTotal = $this->pdo->query($query->getFilteredCountSql())->fetchColumn();
+        $total = $this->db->count($query);
+        $filteredTotal = $this->db->filteredCount($query);
 
-        $params = $this->params($query);
-
-        $this->filter($query, $params);
+        $params = $this->filter($query);
         $this->order($query);
         $this->limit($query);
 
-        $statement = $this->pdo->prepare($query);
-        
-        foreach ($params as $key => $param) {
-            $statement->bindParam($key, $param['value'], $param['type']);
-        }
-
-        $statement->execute();
-        $data = $statement->fetchAll();
+        $data = $this->db->execute($query, $params);
 
         return [
-            'draw'            => $this->option->draw(),
+            'draw'            => $this->options->draw(),
             'recordsTotal'    => (int)$total,
             'recordsFiltered' => (int)$filteredTotal,
             'data'            => $data,
@@ -77,38 +57,20 @@ class Datatable
 
     private function params(Query $query): array
     {
-        $searchValue = $this->option->searchValue();
-        $fields = $query->getFields();
-        $params = [];
-
-        foreach ($this->option->columns() as $column) {
-            if ($column['searchable'] == 'true') {
-                $field = array_search($column['data'], $fields);
-
-                if ($field) {
-                    $params[':binding_' . count($params)] = [
-                        'field' => $field,
-                        'value' => '%'.$searchValue.'%',
-                        'type'  => \PDO::PARAM_STR,
-                    ];
-                }
-            }
-        }
-
-        return $params;
+        
     }
 
     private function limit(Query $query): void
     {
-        $query->limit($this->option->start(), $this->option->length());
+        $query->limit($this->options->start(), $this->options->length());
     }
 
     private function order(Query $query): void
     {
-        $columns = $this->option->columns();
+        $columns = $this->options->columns();
         $fields = $query->getFields();
 
-        foreach ($this->option->order() as $order) {
+        foreach ($this->options->order() as $order) {
             $column = $columns[$order['column']];
             $field = array_search($column, $fields);
 
@@ -122,10 +84,36 @@ class Datatable
         }
     }
 
-    private function filter(Query $query, array $params): void
+    private function filter(Query $query): array
     {
-        foreach ($params as $key => $param) {
-            $query->where($param['field'] . ' LIKE ' . $key);
+        $globalSearch = $this->options->searchValue();
+        $fields = $query->getFields();
+        $params = [];
+        $globalWhere = [];
+        $columnWhere = [];
+        
+        foreach ($this->options->columns() as $column) {
+            if ($column['searchable'] == 'true') {
+                $field = array_search($column['data'], $fields);
+                
+                if ($field) {
+                    if ($globalSearch) {
+                        $key = ':binding_'.count($params);
+                        $params[$key] = "%$globalSearch%";
+                        $globalWhere[] = "$field LIKE $key";
+                    }
+
+                    $columnSearch = $column['search']['value'];
+                    
+                    if ($columnSearch) {
+                        $key = ':binding_' . count($params);
+                        $params[$key] = "%$columnSearch%";
+                        $columnWhere[] = "$field LIKE $key";
+                    }
+                }
+            }
         }
+
+        // $query->where()
     }
 }
