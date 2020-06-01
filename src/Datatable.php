@@ -2,8 +2,6 @@
 
 namespace Esclaudio\Datatables;
 
-use Esclaudio\Datatables\Query\Translator\TranslatorInterface;
-use Esclaudio\Datatables\Query\Translator\AnsiTranslator;
 use Esclaudio\Datatables\Query\Builder;
 use Esclaudio\Datatables\DatabaseInterface;
 
@@ -126,12 +124,12 @@ class Datatable
 
     public function whereNull($column): self
     {
-        return $this->where($column, 'is', $this->raw('null'));
+        return $this->where($column, 'is', $this->baseQuery->raw('null'));
     }
 
     public function whereNotNull($column): self
     {
-        return $this->where($column, 'is not', $this->raw('null'));
+        return $this->where($column, 'is not', $this->baseQuery->raw('null'));
     }
     
     /**
@@ -272,18 +270,13 @@ class Datatable
     protected function filter(Builder $query): void
     {
         $queryFields = $this->fields($query);
-        
-        /** @var \Esclaudio\Datatables\Column[] $searchableColumns */
-        $searchableColumns = array_filter($this->options->columns(), function (Column $column) {
-            return $column->searchable;
-        });
-
+        $searchableColumns = $this->options->searchableColumns();
         $globalSearch = $this->options->searchValue();
 
         if ($searchableColumns && $globalSearch) {
             $query->where(function ($query) use ($searchableColumns, $queryFields, $globalSearch) {
                 foreach ($searchableColumns as $column) {
-                    $field = $queryFields[$column->name] ?? null;
+                    $field = $queryFields[$column->name()] ?? null;
 
                     if ($field) {
                         $query->orWhere($field, 'like', "%$globalSearch%");
@@ -293,10 +286,10 @@ class Datatable
         }
 
         foreach ($searchableColumns as $column) {
-            $columnSearch = $column->searchValue;
+            $columnSearch = $column->searchValue();
             
             if ($columnSearch) {
-                $field = $queryFields[$column->name] ?? null;
+                $field = $queryFields[$column->name()] ?? null;
 
                 if ($field) {
                     $query->where($field, 'like', "%$columnSearch%");
@@ -332,7 +325,7 @@ class Datatable
         $fields = [];
 
         // The reason to cast fields to string is because
-        // I can have an expression object
+        // there could be expression objects
 
         foreach ($query->getFields() as $alias => $field) {
             if (is_int($alias)) {

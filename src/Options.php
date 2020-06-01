@@ -53,15 +53,15 @@ class Options
         $this->length = (int)($request['length'] ?? 0);
         $this->searchValue = $request['search']['value'] ?? null;
 
-        $requestColumns = (array)($request['columns'] ?? null);
+        $columns = (array)($request['columns'] ?? null);
 
-        foreach ($requestColumns as $requestColumn) {
-            $column = new Column($requestColumn['data']);
-            $column->searchable  = 'true' === ($requestColumn['searchable'] ?? 'false');
-            $column->orderable   = 'true' === ($requestColumn['orderable'] ?? 'false');
-            $column->searchValue = $requestColumn['search']['value'] ?? null;
-
-            $this->columns[] = $column;
+        foreach ($columns as $column) {
+            $this->columns[] = new Column(
+                $column['data'],
+                'true' === ($column['searchable'] ?? 'false'),
+                'true' === ($column['orderable'] ?? 'false'),
+                $column['search']['value'] ?? null
+            );
         }
 
         $orders = (array)($request['order'] ?? null);
@@ -69,9 +69,9 @@ class Options
         foreach($orders as $order) {
             $column = $this->columns[$order['column']] ?? null;
 
-            if ($column && $column->orderable) {
+            if ($column && $column->orderable()) {
                 $this->order[] = new Order(
-                    $column->name,
+                    $column->name(),
                     strtolower($order['dir']) === 'desc'? 'desc': 'asc'
                 );
             }
@@ -112,5 +112,15 @@ class Options
     public function columns(): array
     {
         return $this->columns;
+    }
+
+    /**
+     * @return \Esclaudio\Datatables\Column[]
+     */
+    public function searchableColumns(): array
+    {
+        return array_filter($this->options->columns(), function (Column $column) {
+            return $column->searchable();
+        });
     }
 }

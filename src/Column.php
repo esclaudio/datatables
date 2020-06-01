@@ -9,62 +9,55 @@ class Column
      *
      * @var string
      */
-    public $name;
+    protected $name;
 
     /**
      * Searchable
      *
      * @var bool
      */
-    public $searchable = true;
+    protected $searchable;
 
     /**
      * Orderable
      *
      * @var bool
      */
-    public $orderable = true;
+    protected $orderable;
 
     /**
      * Search value
      *
      * @var null|string
      */
-    public $searchValue = null;
+    protected $searchValue;
 
-    /**
-     * Callback
-     *
-     * @var \Closure
-     */
-    public $callback = null;
-
-    /**
-     * Hidden
-     *
-     * @var boolean
-     */
-    public $hidden = false;
-
-    public function __construct(string $name)
+    public function __construct(string $name, bool $searchable = false, bool $orderable = false, string $searchValue = null)
     {
         $this->name = $name;
+        $this->searchable = $searchable;
+        $this->orderable = $orderable;
+        $this->searchValue = $searchValue;
     }
 
-    public function value(array $row)
+    public function name(): string
     {
-        if ($this->callback) {
-            return call_user_func($this->callback, $row);
-        }
-
-        return $row[$this->name] ?? '';
+        return $this->name;
     }
 
-    public function hide(): void
+    public function searchable(): bool
     {
-        $this->hidden = true;
-        $this->searchable = false;
-        $this->orderable = false;
+        return $this->searchable;
+    }
+
+    public function orderable(): bool
+    {
+        return $this->orderable;
+    }
+
+    public function searchValue(): ?string
+    {
+        return $this->searchValue;
     }
 
     public function __toString(): string
