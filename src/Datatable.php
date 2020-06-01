@@ -2,23 +2,26 @@
 
 namespace Esclaudio\Datatables;
 
-use Esclaudio\Datatables\Contracts\Database;
+use Esclaudio\Datatables\Query\Translator\TranslatorInterface;
+use Esclaudio\Datatables\Query\Translator\AnsiTranslator;
+use Esclaudio\Datatables\Query\Builder;
+use Esclaudio\Datatables\DatabaseInterface;
 
 class Datatable
 {
     /**
-     * PDO
+     * Database
      *
-     * @var \Esclaudio\Datatables\Contracts\Database
+     * @var \Esclaudio\Datatables\DatabaseInterface
      */
     protected $db;
 
     /**
-     * Query
+     * Base query
      *
-     * @var \Esclaudio\Datatables\Query
+     * @var \Esclaudio\Datatables\Query\Builder|null
      */
-    protected $query;
+    protected $baseQuery = null;
 
     /**
      * Options
@@ -27,93 +30,215 @@ class Datatable
      */
     protected $options;
 
-    public function __construct(Database $db, Query $query, array $request)
+    /**
+     * Hidden columns
+     *
+     * @var array
+     */
+    protected $hiddenColumns = [];
+
+    /**
+     * Added columns
+     *
+     * @var array
+     */
+    protected $addedColumns = [];
+
+    /**
+     * Edited columns
+     *
+     * @var array
+     */
+    protected $editedColumns = [];
+
+    public function __construct(DatabaseInterface $db, Options $options, Builder $query = null)
     {
         $this->db = $db;
-        $this->query = $query;
-        $this->options = new Options($request);
+        $this->options = $options;
+        $this->baseQuery = $query;
+    }
+
+    public function from(string $table, TranslatorInterface $translator = null): Builder
+    {
+        return $this->baseQuery = (new Builder())->setTranslator($translator ?? new AnsiTranslator)->from($table);
+    }
+
+    public function add(string $column, \Closure $callback): self
+    {
+        $this->addedColumns[$column] = $callback;
+        return $this;
+    }
+
+    public function addRowId(string $column): self
+    {
+        return $this->add('DT_RowId', function ($row) use ($column) {
+            return 'row_' . $row[$column];
+        });
+    }
+
+    public function edit(string $column, \Closure $callback): self
+    {
+        $this->editedColumns[$column] = $callback;
+        return $this;
+    }
+
+    public function hide(string $column): self
+    {
+        $this->hiddenColumns[] = $column;
+        return $this;
     }
 
     public function response(): array
     {
-        $query = clone $this->query;
-
-        $total = $this->db->count($query);
-        $filteredTotal = $this->db->filteredCount($query);
-
-        $params = $this->filter($query);
-        $this->order($query);
-        $this->limit($query);
-
-        $data = $this->db->execute($query, $params);
-
         return [
             'draw'            => $this->options->draw(),
-            'recordsTotal'    => (int)$total,
-            'recordsFiltered' => (int)$filteredTotal,
-            'data'            => $data,
+            'recordsTotal'    => $this->total(),
+            'recordsFiltered' => $this->filteredTotal(),
+            'data'            => $this->data(),
         ];
     }
 
-    private function params(Query $query): array
+    public function query(): ?Builder
     {
+        if ( ! $this->baseQuery) return null;
         
+        $query = clone $this->baseQuery;
+
+        $this->filter($query);
+        $this->order($query);
+        $this->limit($query);
+        
+        return $query;
     }
 
-    private function limit(Query $query): void
+    protected function data(): array
+    {
+        if ( ! $query = $this->query()) return [];
+
+        return array_map(function ($row) {
+            $item = [];
+
+            foreach ($row as $column => $value) {
+                if (in_array($column, $this->hiddenColumns)) {
+                    continue;
+                }
+
+                if (array_key_exists($column, $this->editedColumns)) {
+                    $item[$column] = $this->editedColumns[$column]($row);
+                } else {
+                    $item[$column] = $value;
+                }
+            }
+
+            foreach ($this->addedColumns as $column => $callback) {
+                $item[$column] = $callback($row);
+            }
+
+            return $item;
+        }, $this->db->fetchAll($query));
+    }
+
+    protected function total(): int
+    {
+        if ( ! $this->baseQuery) return 0;
+
+        $query = clone $this->baseQuery;
+
+        $query->selectRaw('count(*)')
+            ->resetOrder()
+            ->limit(0);
+
+        return (int)$this->db->fetchColumn($query);
+    }
+
+    protected function filteredTotal(): int
+    {
+        if ( ! $this->baseQuery) return 0;
+
+        $query = clone $this->baseQuery;
+
+        $this->filter($query);
+
+        $query->selectRaw('count(*)')
+            ->resetOrder()
+            ->limit(0);
+
+        return (int)$this->db->fetchColumn($query);
+    }
+
+    protected function filter(Builder $query): void
+    {
+        $queryFields = $this->fields($query);
+        
+        /** @var \Esclaudio\Datatables\Column[] $searchableColumns */
+        $searchableColumns = array_filter($this->options->columns(), function (Column $column) {
+            return $column->searchable;
+        });
+
+        $globalSearch = $this->options->searchValue();
+
+        if ($searchableColumns && $globalSearch) {
+            $query->where(function ($query) use ($searchableColumns, $queryFields, $globalSearch) {
+                foreach ($searchableColumns as $column) {
+                    $field = $queryFields[$column->name] ?? null;
+
+                    if ($field) {
+                        $query->orWhere($field, 'like', "%$globalSearch%");
+                    }
+                }
+            });
+        }
+
+        foreach ($searchableColumns as $column) {
+            $columnSearch = $column->searchValue;
+            
+            if ($columnSearch) {
+                $field = $queryFields[$column->name] ?? null;
+
+                if ($field) {
+                    $query->where($field, 'like', "%$columnSearch%");
+                }
+            }
+        }
+    }
+
+    protected function order(Builder $query): void
+    {
+        $queryFields = $this->fields($query);
+
+        foreach ($this->options->order() as $order) {
+            $field = $queryFields[$order->column()] ?? null;
+
+            if ($field) {
+                if ($order->isAsc()) {
+                    $query->orderBy($field);
+                } else {
+                    $query->orderByDesc($field);
+                }
+            }
+        }
+    }
+
+    protected function limit(Builder $query): void
     {
         $query->limit($this->options->start(), $this->options->length());
     }
 
-    private function order(Query $query): void
+    protected function fields(Builder $query): array
     {
-        $columns = $this->options->columns();
-        $fields = $query->getFields();
+        $fields = [];
 
-        foreach ($this->options->order() as $order) {
-            $column = $columns[$order['column']];
-            $field = array_search($column, $fields);
+        // The reason to cast fields to string is because
+        // I can have an expression object
 
-            if ($field) {
-                if (strtolower($order['dir']) === 'desc') {
-                    $query->orderDesc($field);
-                } else {
-                    $query->order($field);
-                }
+        foreach ($query->getFields() as $alias => $field) {
+            if (is_int($alias)) {
+                $alias = (string)$field;
             }
-        }
-    }
 
-    private function filter(Query $query): array
-    {
-        $globalSearch = $this->options->searchValue();
-        $fields = $query->getFields();
-        $params = [];
-        $globalWhere = [];
-        $columnWhere = [];
-        
-        foreach ($this->options->columns() as $column) {
-            if ($column['searchable'] == 'true') {
-                $field = array_search($column['data'], $fields);
-                
-                if ($field) {
-                    if ($globalSearch) {
-                        $key = ':binding_'.count($params);
-                        $params[$key] = "%$globalSearch%";
-                        $globalWhere[] = "$field LIKE $key";
-                    }
-
-                    $columnSearch = $column['search']['value'];
-                    
-                    if ($columnSearch) {
-                        $key = ':binding_' . count($params);
-                        $params[$key] = "%$columnSearch%";
-                        $columnWhere[] = "$field LIKE $key";
-                    }
-                }
-            }
+            $fields[$alias] = (string)$field;
         }
 
-        // $query->where()
+        return $fields;
     }
 }
