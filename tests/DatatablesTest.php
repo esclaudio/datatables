@@ -1,5 +1,7 @@
 <?php
 
+namespace Esclaudio\Datatables\Tests;
+
 use PHPUnit\Framework\TestCase;
 use Esclaudio\Datatables\Options;
 use Esclaudio\Datatables\Datatable;
@@ -17,10 +19,10 @@ final class DatatablesTest extends TestCase
 
     protected $pdo;
     protected $request;
-    
+
     public function setUp(): void
     {
-        $this->pdo = new PDO('sqlite:'.__DIR__.'/fixtures/test.db');
+        $this->pdo = new \PDO('sqlite:'.__DIR__.'/fixtures/test.db');
         $this->request = [
             'draw' => self::REQUEST_DRAW,
             'columns' => [
@@ -86,7 +88,7 @@ final class DatatablesTest extends TestCase
     public function simple_request(): void
     {
         $response = $this->datatable()->response();
-        
+
         $this->assertResponse(self::REQUEST_DRAW, self::TOTAL_RECORDS, self::TOTAL_RECORDS, $response);
         $this->assertLessThanOrEqual(self::REQUEST_LENGTH, count($response['data']));
 

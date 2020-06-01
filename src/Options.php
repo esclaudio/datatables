@@ -119,7 +119,7 @@ class Options
      */
     public function searchableColumns(): array
     {
-        return array_filter($this->options->columns(), function (Column $column) {
+        return array_filter($this->columns, function (Column $column) {
             return $column->searchable();
         });
     }

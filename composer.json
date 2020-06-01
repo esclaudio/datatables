@@ -16,6 +16,11 @@
           "Esclaudio\\Datatables\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+          "Esclaudio\\Datatables\\Tests\\": "tests/"
+        }
+    },
     "minimum-stability": "dev",
     "scripts": {
         "test": "vendor/bin/phpunit"

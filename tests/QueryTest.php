@@ -1,8 +1,8 @@
 <?php
 
+namespace Esclaudio\Datatables\Tests;
+
 use PHPUnit\Framework\TestCase;
-use Esclaudio\Datatables\Translator\PostgresqlTranslator;
-use Esclaudio\Datatables\Translator\MysqlTranslator;
 use Esclaudio\Datatables\Query\Builder;
 
 final class QueryTest extends TestCase
@@ -17,7 +17,7 @@ final class QueryTest extends TestCase
     public function simple_query(): void
     {
         $query = $this->getQuery()->from('test');
-        
+
         $this->assertEquals('select * from "test"', (string)$query);
     }
 
@@ -27,19 +27,19 @@ final class QueryTest extends TestCase
         $query = $this->getQuery()
             ->from('test')
             ->select(['id', 'name']);
-        
+
         $this->assertEquals('select "id", "name" from "test"', (string)$query);
 
         $query = $this->getQuery()
             ->from('test')
             ->select('id, name');
-        
+
         $this->assertEquals('select "id", "name" from "test"', (string)$query);
 
         $query = $this->getQuery()
             ->from('test as t')
             ->select('t.id as id, t.name as name');
-        
+
         $this->assertEquals('select "t"."id" as "id", "t"."name" as "name" from "test" as "t"', (string)$query);
 
         $query = $this->getQuery()
@@ -71,7 +71,7 @@ final class QueryTest extends TestCase
 
         $this->assertEquals('select * from "test" where "id" = ?', (string)$query);
         $this->assertEquals([1], $query->getBindings());
-        
+
         $query = $this->getQuery()
             ->from('test')
             ->where('name', 'like', '%claudio%')
@@ -144,7 +144,7 @@ final class QueryTest extends TestCase
             ->join('example1 as e1', 't.example_1', '=', 'e1.id')
             ->leftJoin('example2 as e2', 't.example_2', '=', 'e2.id')
             ->rightJoin('example3 as e3', 't.example_3', '=', 'e3.id');
-        
+
         $this->assertEquals('select "t"."id", "e1"."name" as "e1_name", "e2"."name" as "e2_name", "e3"."name" as "e3_name" from "test" as "t" inner join "example1" as "e1" on "t"."example_1" = "e1"."id" left join "example2" as "e2" on "t"."example_2" = "e2"."id" right join "example3" as "e3" on "t"."example_3" = "e3"."id"', (string)$query);
     }
 
@@ -155,13 +155,13 @@ final class QueryTest extends TestCase
             ->from('test')
             ->orderBy('id')
             ->orderByDesc('name');
-        
+
         $this->assertEquals('select * from "test" order by "id" asc, "name" desc', (string)$query);
 
         $query = $this->getQuery()
             ->from('test')
             ->orderBy(['id', 'name']);
-        
+
         $this->assertEquals('select * from "test" order by "id" asc, "name" asc', (string)$query);
     }
 
@@ -173,7 +173,7 @@ final class QueryTest extends TestCase
         $query->from('test')
             ->select(['year', $query->raw('sum(total) as total_year')])
             ->groupBy('year');
-        
+
         $this->assertEquals('select "year", sum(total) as total_year from "test" group by "year"', (string)$query);
 
         $query = $this->getQuery();
@@ -181,7 +181,7 @@ final class QueryTest extends TestCase
         $query->from('test')
             ->select(['year', 'month', $query->raw('count(*)')])
             ->groupBy(['year', 'month']);
-        
+
         $this->assertEquals('select "year", "month", count(*) from "test" group by "year", "month"', (string)$query);
     }
 
@@ -191,20 +191,20 @@ final class QueryTest extends TestCase
         $query = $this->getQuery()
             ->from('test')
             ->limit(0);
-        
+
         $this->assertEquals('select * from "test"', (string)$query);
 
         $query = $this->getQuery()
             ->from('test')
             ->limit(10, 2)
             ->limit(5);
-        
+
         $this->assertEquals('select * from "test" limit 5', (string)$query);
 
         $query = $this->getQuery()
             ->from('test')
             ->limit(0, 5);
-        
+
         $this->assertEquals('select * from "test" limit 0, 5', (string)$query);
     }
 
