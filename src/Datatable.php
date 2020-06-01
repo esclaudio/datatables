@@ -55,12 +55,115 @@ class Datatable
     {
         $this->db = $db;
         $this->options = $options;
-        $this->baseQuery = $query;
+        $this->baseQuery = $query ?? new Builder;
     }
 
-    public function from(string $table, TranslatorInterface $translator = null): Builder
+    public function from(string $table): self
     {
-        return $this->baseQuery = (new Builder())->setTranslator($translator ?? new AnsiTranslator)->from($table);
+        $this->baseQuery->from($table);
+        return $this;
+    }
+
+    /**
+     * @param string|array $fields
+     * @return self
+     */
+    public function select($fields): self
+    {
+        $this->baseQuery->select($fields);
+        return $this;
+    }
+
+    public function selectRaw(string $expression): self
+    {
+        $this->baseQuery->selectRaw($expression);
+        return $this;
+    }
+
+    public function join(string $table, string $first, string $operator, string $second, string $type = 'inner'): self
+    {
+        $this->baseQuery->join($table, $first, $operator, $second);
+        return $this;
+    }
+
+    public function leftJoin(string $table, string $first, string $operator, string $second): self
+    {
+        return $this->join($table, $first, $operator, $second, 'left');
+    }
+
+    public function rightJoin(string $table, string $first, string $operator, string $second): self
+    {
+        return$this->join($table, $first, $operator, $second, 'right');
+    }
+
+    /**
+     * @param string|\Closure $column
+     * @param string|array $operator
+     * @param string|array|null $value
+     * @param string $type
+     * @return self
+     */
+    public function where($column, $operator = null, $value = null, string $type = 'and'): self
+    {
+        $this->baseQuery->where($column, $operator, $value, $type);
+        return $this;
+    }
+
+    public function orWhere($column, $param1 = null, $param2 = null): self
+    {
+        return $this->where($column, $param1, $param2, 'or');
+    }
+
+    public function whereIn($column, array $params): self
+    {
+        return $this->where($column, 'in', $params);
+    }
+
+    public function whereNotIn($column, array $params): self
+    {
+        return $this->where($column, 'not in', $params);
+    }
+
+    public function whereNull($column): self
+    {
+        return $this->where($column, 'is', $this->raw('null'));
+    }
+
+    public function whereNotNull($column): self
+    {
+        return $this->where($column, 'is not', $this->raw('null'));
+    }
+    
+    /**
+     * @param string|array $column
+     * @param string $type
+     * @return self
+     */
+    public function orderBy($column, string $type = 'asc'): self
+    {
+        $this->baseQuery->orderBy($column, $type);
+        return $this;
+    }
+
+    /**
+     * @param string|array $column
+     * @param string $type
+     * @return self
+     */
+    public function orderByDesc($column): self
+    {
+        return $this->orderBy($column, 'desc');
+    }
+
+    /**
+     * @param string|array $column
+     * @param string $type
+     * @return self
+     */
+    public function groupBy($column): self
+    {
+        $this->baseQuery->groupBy($column);
+        return $this;
     }
 
     public function add(string $column, \Closure $callback): self

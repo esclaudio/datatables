@@ -7,13 +7,13 @@ use Esclaudio\Datatables\Adapters\PdoAdapter;
 
 final class DatatablesTest extends TestCase
 {
-    const REQUEST_DRAW = '1';
-    const REQUEST_LENGTH = 5;
-    const REQUEST_COLUMN_ID = 0;
-    const REQUEST_COLUMN_NAME = 1;
-    const REQUEST_COLUMN_AGE = 2;
+    const REQUEST_DRAW                   = 1;
+    const REQUEST_LENGTH                 = 5;
+    const REQUEST_COLUMN_ID              = 0;
+    const REQUEST_COLUMN_NAME            = 1;
+    const REQUEST_COLUMN_AGE             = 2;
     const REQUEST_COLUMN_CREATED_BY_NAME = 3;
-    const TOTAL_RECORDS = 11;
+    const TOTAL_RECORDS                  = 11;
 
     protected $pdo;
     protected $request;
@@ -263,12 +263,10 @@ final class DatatablesTest extends TestCase
 
     public function datatable(): Datatable
     {
-        $datatable = new Datatable(new PdoAdapter($this->pdo), new Options($this->request));
-        $datatable->from('customers as c')
+        return (new Datatable(new PdoAdapter($this->pdo), new Options($this->request)))
+            ->from('customers as c')
             ->join('users as u', 'c.created_by', '=', 'u.id')
             ->select('c.id as id, c.name as name, c.age as age, u.name as created_by_name');
-
-        return $datatable;
     }
 }
 

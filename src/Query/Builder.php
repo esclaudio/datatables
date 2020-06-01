@@ -77,9 +77,9 @@ class Builder
      */
     protected $length = 0;
 
-    public function __construct()
+    public function __construct(TranslatorInterface $translator = null)
     {
-        $this->translator = new AnsiTranslator;
+        $this->translator = $translator ?? new AnsiTranslator;
     }
 
     public function getTable(): ?string
