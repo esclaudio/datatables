@@ -17,12 +17,11 @@ abstract class QueryTest extends TestCase
      * @var array
      */
     protected $grammars = [
-        ''       => Grammar::class,
         'sqlite' => SQLiteGrammar::class,
         'mysql'  => MySqlGrammar::class,
         'pgsql'  => PostgresGrammar::class,
     ];
-    
+
     /**
      * Query
      *
@@ -35,12 +34,19 @@ abstract class QueryTest extends TestCase
      *
      * @var string
      */
-    protected $driver = '';
+    protected $driver = null;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->query = new Builder(new $this->grammars[$this->driver]);
+
+        if (array_key_exists($this->driver, $this->grammars)) {
+            $grammar = new $this->grammars[$this->driver];
+        } else {
+            $grammar = new Grammar;
+        }
+
+        $this->query = new Builder($grammar);
     }
 
     /** @test */
