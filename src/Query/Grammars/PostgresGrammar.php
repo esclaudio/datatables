@@ -2,6 +2,6 @@
 
 namespace Esclaudio\Datatables\Query\Grammars;
 
-class PostgresqlGrammar extends Grammar
+class PostgresGrammar extends Grammar
 {
 }

@@ -5,9 +5,9 @@ namespace Esclaudio\Datatables\Database;
 use PDOStatement;
 use PDO;
 use Exception;
-use Esclaudio\Datatables\Query\Grammars\SqliteGrammar;
-use Esclaudio\Datatables\Query\Grammars\PostgresqlGrammar;
-use Esclaudio\Datatables\Query\Grammars\MysqlGrammar;
+use Esclaudio\Datatables\Query\Grammars\SQLiteGrammar;
+use Esclaudio\Datatables\Query\Grammars\PostgresGrammar;
+use Esclaudio\Datatables\Query\Grammars\MySqlGrammar;
 use Esclaudio\Datatables\Query\Grammars\Grammar;
 use Esclaudio\Datatables\Query\Builder;
 use Esclaudio\Datatables\Database\ConnectionInterface;
@@ -17,9 +17,9 @@ class Connection implements ConnectionInterface
     protected $pdo;
     
     protected $grammars = [
-        'sqlite'   => SqliteGrammar::class,
-        'mysql'    => MysqlGrammar::class,
-        'postgres' => PostgresqlGrammar::class,
+        'sqlite' => SQLiteGrammar::class,
+        'mysql'  => MySqlGrammar::class,
+        'pgsql'  => PostgresGrammar::class,
     ];
 
     public function __construct(PDO $pdo)

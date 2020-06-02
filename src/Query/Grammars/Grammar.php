@@ -7,6 +7,19 @@ use Esclaudio\Datatables\Query\Builder;
 
 class Grammar
 {
+    protected $quotePrefix = '"';
+    protected $quoteSuffix = '"';
+
+    public function getQuotePrefix(): string
+    {
+        return $this->quotePrefix;
+    }
+
+    public function getQuoteSuffix(): string
+    {
+        return $this->quoteSuffix;
+    }
+    
     public function compile(Builder $query): string
     {
         if ( ! $query->getTable()) {
@@ -155,6 +168,6 @@ class Grammar
 
     protected function wrapValue(string $value): string
     {
-        return '"' . str_replace('"', '""', $value) . '"';
+        return $this->quotePrefix . str_replace($this->quoteSuffix, $this->quoteSuffix.$this->quoteSuffix, $value) . $this->quoteSuffix;
     }
 }

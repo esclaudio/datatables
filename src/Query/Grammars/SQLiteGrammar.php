@@ -2,6 +2,6 @@
 
 namespace Esclaudio\Datatables\Query\Grammars;
 
-class SqliteGrammar extends Grammar
+class SQLiteGrammar extends Grammar
 {
 }

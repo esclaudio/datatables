@@ -81,6 +81,11 @@ class Builder
         $this->grammar = $grammar ?? new Grammar;
     }
 
+    public function getGrammar(): Grammar
+    {
+        return $this->grammar;
+    }
+
     public function getTable(): string
     {
         return $this->table ?? '';
