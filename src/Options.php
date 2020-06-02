@@ -66,7 +66,7 @@ class Options
 
         $orders = (array)($request['order'] ?? null);
 
-        foreach($orders as $order) {
+        foreach ($orders as $order) {
             $column = $this->columns[$order['column']] ?? null;
 
             if ($column && $column->orderable()) {

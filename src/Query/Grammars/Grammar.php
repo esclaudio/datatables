@@ -2,8 +2,8 @@
 
 namespace Esclaudio\Datatables\Query\Grammars;
 
-use Esclaudio\Datatables\Query\Expression;
 use Esclaudio\Datatables\Query\Builder;
+use Esclaudio\Datatables\Query\Expression;
 
 class Grammar
 {
@@ -22,7 +22,7 @@ class Grammar
     
     public function compile(Builder $query): string
     {
-        if ( ! $query->getTable()) {
+        if (! $query->getTable()) {
             return 'select 0';
         }
 
@@ -39,7 +39,9 @@ class Grammar
     {
         $fields = $query->getFields();
 
-        if ( ! $fields) return 'select *';
+        if (! $fields) {
+            return 'select *';
+        }
 
         $build = 'select ';
 
@@ -61,7 +63,9 @@ class Grammar
 
     protected function compileJoin(Builder $query): string
     {
-        if ( ! $joins = $query->getJoins()) return '';
+        if (! $joins = $query->getJoins()) {
+            return '';
+        }
 
         return ' ' . implode(' ', array_map(function ($join) {
             return $join[0] . ' join ' . $this->wrap($join[1]) . ' on ' . $this->wrap($join[2]) . ' ' . $join[3] . ' ' . $this->wrap($join[4]);
@@ -70,7 +74,9 @@ class Grammar
 
     protected function compileWhere(Builder $query): string
     {
-        if ( ! $wheres = $query->getWheres()) return '';
+        if (! $wheres = $query->getWheres()) {
+            return '';
+        }
         
         return ' ' . implode(' ', array_map(function ($where) {
             if ($where[1] instanceof Builder) {
@@ -91,7 +97,9 @@ class Grammar
 
     protected function compileOrderBy(Builder $query): string
     {
-        if ( ! $orders = $query->getOrders()) return '';
+        if (! $orders = $query->getOrders()) {
+            return '';
+        }
         
         return ' order by ' . implode(', ', array_map(function ($order) {
             return $this->wrap($order[1]) . ' ' . $order[0];
@@ -100,7 +108,9 @@ class Grammar
 
     protected function compileGroupBy(Builder $query): string
     {
-        if ( ! $groups = $query->getGroups()) return '';
+        if (! $groups = $query->getGroups()) {
+            return '';
+        }
         
         return ' group by ' . implode(', ', array_map([$this, 'wrap'], $groups));
     }

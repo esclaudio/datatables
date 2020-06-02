@@ -2,9 +2,8 @@
 
 namespace Esclaudio\Datatables;
 
-use Esclaudio\Datatables\Query\Builder;
-use Esclaudio\Datatables\Database\DatabaseInterface;
 use Esclaudio\Datatables\Database\Connection;
+use Esclaudio\Datatables\Query\Builder;
 
 class Datatables
 {
@@ -60,6 +59,7 @@ class Datatables
     public function from(string $table): self
     {
         $this->baseQuery->from($table);
+
         return $this;
     }
 
@@ -70,18 +70,21 @@ class Datatables
     public function select($fields): self
     {
         $this->baseQuery->select($fields);
+
         return $this;
     }
 
     public function selectRaw(string $expression): self
     {
         $this->baseQuery->selectRaw($expression);
+
         return $this;
     }
 
     public function join(string $table, string $first, string $operator, string $second, string $type = 'inner'): self
     {
         $this->baseQuery->join($table, $first, $operator, $second);
+
         return $this;
     }
 
@@ -105,6 +108,7 @@ class Datatables
     public function where($column, $operator = null, $value = null, string $type = 'and'): self
     {
         $this->baseQuery->where($column, $operator, $value, $type);
+
         return $this;
     }
 
@@ -141,6 +145,7 @@ class Datatables
     public function orderBy($column, string $type = 'asc'): self
     {
         $this->baseQuery->orderBy($column, $type);
+
         return $this;
     }
 
@@ -162,12 +167,14 @@ class Datatables
     public function groupBy($column): self
     {
         $this->baseQuery->groupBy($column);
+
         return $this;
     }
 
     public function addColumn(string $column, \Closure $callback): self
     {
         $this->addedColumns[$column] = $callback;
+
         return $this;
     }
 
@@ -181,22 +188,24 @@ class Datatables
     public function editColumn(string $column, \Closure $callback): self
     {
         $this->editedColumns[$column] = $callback;
+
         return $this;
     }
 
     public function hideColumn(string $column): self
     {
         $this->hiddenColumns[] = $column;
+
         return $this;
     }
 
     public function toArray(): array
     {
         return [
-            'draw'            => $this->options->draw(),
-            'recordsTotal'    => $this->total(),
+            'draw' => $this->options->draw(),
+            'recordsTotal' => $this->total(),
             'recordsFiltered' => $this->filteredTotal(),
-            'data'            => $this->data(),
+            'data' => $this->data(),
         ];
     }
 

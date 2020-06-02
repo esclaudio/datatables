@@ -2,24 +2,23 @@
 
 namespace Esclaudio\Datatables\Database;
 
-use PDOStatement;
-use PDO;
-use Exception;
-use Esclaudio\Datatables\Query\Grammars\SQLiteGrammar;
-use Esclaudio\Datatables\Query\Grammars\PostgresGrammar;
-use Esclaudio\Datatables\Query\Grammars\MySqlGrammar;
-use Esclaudio\Datatables\Query\Grammars\Grammar;
 use Esclaudio\Datatables\Query\Builder;
-use Esclaudio\Datatables\Database\ConnectionInterface;
+use Esclaudio\Datatables\Query\Grammars\Grammar;
+use Esclaudio\Datatables\Query\Grammars\MySqlGrammar;
+use Esclaudio\Datatables\Query\Grammars\PostgresGrammar;
+use Esclaudio\Datatables\Query\Grammars\SQLiteGrammar;
+use Exception;
+use PDO;
+use PDOStatement;
 
 class Connection implements ConnectionInterface
 {
     protected $pdo;
-    
+
     protected $grammars = [
         'sqlite' => SQLiteGrammar::class,
-        'mysql'  => MySqlGrammar::class,
-        'pgsql'  => PostgresGrammar::class,
+        'mysql' => MySqlGrammar::class,
+        'pgsql' => PostgresGrammar::class,
     ];
 
     public function __construct(PDO $pdo)
@@ -51,7 +50,7 @@ class Connection implements ConnectionInterface
     {
         $driver = $this->driver();
 
-        if ( ! array_key_exists($driver, $this->grammars)) {
+        if (! array_key_exists($driver, $this->grammars)) {
             throw new Exception("Unsupported driver $driver");
         }
 

@@ -2,12 +2,12 @@
 
 namespace Esclaudio\Datatables\Tests;
 
-use PHPUnit\Framework\TestCase;
-use Esclaudio\Datatables\Query\Grammars\SQLiteGrammar;
-use Esclaudio\Datatables\Query\Grammars\PostgresGrammar;
-use Esclaudio\Datatables\Query\Grammars\MySqlGrammar;
-use Esclaudio\Datatables\Query\Grammars\Grammar;
 use Esclaudio\Datatables\Query\Builder;
+use Esclaudio\Datatables\Query\Grammars\Grammar;
+use Esclaudio\Datatables\Query\Grammars\MySqlGrammar;
+use Esclaudio\Datatables\Query\Grammars\PostgresGrammar;
+use Esclaudio\Datatables\Query\Grammars\SQLiteGrammar;
+use PHPUnit\Framework\TestCase;
 
 abstract class QueryTest extends TestCase
 {
@@ -18,8 +18,8 @@ abstract class QueryTest extends TestCase
      */
     protected $grammars = [
         'sqlite' => SQLiteGrammar::class,
-        'mysql'  => MySqlGrammar::class,
-        'pgsql'  => PostgresGrammar::class,
+        'mysql' => MySqlGrammar::class,
+        'pgsql' => PostgresGrammar::class,
     ];
 
     /**
@@ -321,7 +321,8 @@ SQL;
     {
         $this->query
             ->from('test')
-            ->where(function () {})
+            ->where(function () {
+            })
             ->where('id', 1);
 
         $expect = <<<SQL

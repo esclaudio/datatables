@@ -2,7 +2,7 @@
 
 namespace Esclaudio\Datatables\Query;
 
-class Expression 
+class Expression
 {
     /**
      * Value

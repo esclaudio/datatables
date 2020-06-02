@@ -65,14 +65,14 @@ class Builder
     /**
      * Start
      *
-     * @var integer
+     * @var int
      */
     protected $start = 0;
 
     /**
      * Length
      *
-     * @var integer
+     * @var int
      */
     protected $length = 0;
 
@@ -135,18 +135,21 @@ class Builder
     {
         $this->wheres = [];
         $this->bindings = [];
+
         return $this;
     }
 
     public function resetOrder(): self
     {
         $this->orders = [];
+
         return $this;
     }
 
     public function from(string $table): self
     {
         $this->table = $table;
+
         return $this;
     }
 
@@ -183,6 +186,7 @@ class Builder
     public function selectRaw(string $expression): self
     {
         $this->fields = [new Expression($expression)];
+
         return $this;
     }
 
@@ -190,15 +194,16 @@ class Builder
     {
         $type = strtolower($type);
 
-        if ( ! in_array($type, ['inner', 'left', 'right'])) {
+        if (! in_array($type, ['inner', 'left', 'right'])) {
             throw new \Exception('Invalid join type "' . $type . '"');
         }
 
-        if ( ! in_array($operator, ['=', '<', '<=', '>', '>=', '!='])) {
+        if (! in_array($operator, ['=', '<', '<=', '>', '>=', '!='])) {
             throw new \Exception('Invalid join operator "' . $operator . '"');
         }
 
         $this->joins[] = [$type, $table, $first, $operator, $second];
+
         return $this;
     }
 
@@ -223,7 +228,7 @@ class Builder
     {
         $type = strtolower($type);
 
-        if ( ! in_array($type, ['and', 'or'])) {
+        if (! in_array($type, ['and', 'or'])) {
             throw new \Exception('Invalid where type "'.$type.'"');
         }
 
@@ -234,7 +239,7 @@ class Builder
         if ($column instanceof \Closure) {
             call_user_func($column, $query = new Builder($this->grammar));
 
-            if ( ! empty($query->getWheres())) {
+            if (! empty($query->getWheres())) {
                 $this->wheres[] = [$type, $query];
                 $this->addBinding($query->getBindings());
             }
@@ -248,7 +253,7 @@ class Builder
 
         $this->wheres[] = [$type, $column, $operator, $value];
 
-        if ( ! $value instanceof Expression) {
+        if (! $value instanceof Expression) {
             $this->addBinding($value);
         }
 
@@ -289,7 +294,7 @@ class Builder
     {
         $type = trim($type);
 
-        if ( ! in_array($type, ['asc', 'desc'])) {
+        if (! in_array($type, ['asc', 'desc'])) {
             throw new \Exception('Invalid order type "'.$type.'"');
         }
 

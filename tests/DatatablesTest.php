@@ -2,20 +2,20 @@
 
 namespace Esclaudio\Datatables\Tests;
 
-use PHPUnit\Framework\TestCase;
-use Esclaudio\Datatables\Options;
-use Esclaudio\Datatables\Datatables;
 use Esclaudio\Datatables\Database\Connection;
+use Esclaudio\Datatables\Datatables;
+use Esclaudio\Datatables\Options;
+use PHPUnit\Framework\TestCase;
 
 final class DatatablesTest extends TestCase
 {
-    const REQUEST_DRAW                   = 1;
-    const REQUEST_LENGTH                 = 5;
-    const REQUEST_COLUMN_ID              = 0;
-    const REQUEST_COLUMN_NAME            = 1;
-    const REQUEST_COLUMN_AGE             = 2;
+    const REQUEST_DRAW = 1;
+    const REQUEST_LENGTH = 5;
+    const REQUEST_COLUMN_ID = 0;
+    const REQUEST_COLUMN_NAME = 1;
+    const REQUEST_COLUMN_AGE = 2;
     const REQUEST_COLUMN_CREATED_BY_NAME = 3;
-    const TOTAL_RECORDS                  = 11;
+    const TOTAL_RECORDS = 11;
 
     protected $pdo;
     protected $request;
@@ -27,34 +27,34 @@ final class DatatablesTest extends TestCase
             'draw' => self::REQUEST_DRAW,
             'columns' => [
                 [
-                    'data'       => 'id',
+                    'data' => 'id',
                     'searchable' => 'true',
-                    'orderable'  => 'true',
-                    'search'     => [],
+                    'orderable' => 'true',
+                    'search' => [],
                 ],
                 [
-                    'data'       => 'name',
+                    'data' => 'name',
                     'searchable' => 'true',
-                    'orderable'  => 'true',
-                    'search'     => [],
+                    'orderable' => 'true',
+                    'search' => [],
                 ],
                 [
-                    'data'       => 'age',
+                    'data' => 'age',
                     'searchable' => 'true',
-                    'orderable'  => 'true',
-                    'search'     => [],
+                    'orderable' => 'true',
+                    'search' => [],
                 ],
                 [
-                    'data'       => 'created_by_name',
+                    'data' => 'created_by_name',
                     'searchable' => 'true',
-                    'orderable'  => 'true',
-                    'search'     => [],
+                    'orderable' => 'true',
+                    'search' => [],
                 ],
             ],
-            'order'  => [],
-            'start'  => '0',
+            'order' => [],
+            'start' => '0',
             'length' => strval(self::REQUEST_LENGTH),
-            'search' => []
+            'search' => [],
         ];
     }
 
@@ -237,7 +237,7 @@ final class DatatablesTest extends TestCase
         $this->request['order'] = [
             [
                 'column' => self::REQUEST_COLUMN_AGE,
-                'dir' => 'desc'
+                'dir' => 'desc',
             ],
         ];
 
@@ -271,4 +271,3 @@ final class DatatablesTest extends TestCase
             ->select('c.id as id, c.name as name, c.age as age, u.name as created_by_name');
     }
 }
-

@@ -2,8 +2,8 @@
 
 namespace Esclaudio\Datatables\Database;
 
-use Esclaudio\Datatables\Query\Grammars\Grammar;
 use Esclaudio\Datatables\Query\Builder;
+use Esclaudio\Datatables\Query\Grammars\Grammar;
 
 interface ConnectionInterface
 {
