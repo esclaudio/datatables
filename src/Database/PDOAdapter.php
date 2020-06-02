@@ -1,26 +1,27 @@
 <?php
 
-namespace Esclaudio\Datatables\Adapters;
+namespace Esclaudio\Datatables\Database;
 
 use PDOStatement;
+use PDO;
 use Esclaudio\Datatables\Query\Builder;
-use Esclaudio\Datatables\DatabaseInterface;
+use Esclaudio\Datatables\Database\DatabaseInterface;
 
-class PdoAdapter implements DatabaseInterface
+class PDOAdapter implements DatabaseInterface
 {
     protected $pdo;
 
-    public function __construct(\PDO $pdo)
+    public function __construct(PDO $pdo)
     {
         $this->pdo = $pdo;
-        $this->pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     }
 
     public function fetchAll(Builder $query): array
     {
         $statement = $this->execute($query);
 
-        return $statement->fetchAll(\PDO::FETCH_ASSOC);
+        return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function fetchColumn(Builder $query, int $column = 0): ?string

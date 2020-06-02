@@ -4,8 +4,8 @@ namespace Esclaudio\Datatables\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Esclaudio\Datatables\Options;
-use Esclaudio\Datatables\Datatable;
-use Esclaudio\Datatables\Adapters\PdoAdapter;
+use Esclaudio\Datatables\Datatables;
+use Esclaudio\Datatables\Database\PDOAdapter;
 
 final class DatatablesTest extends TestCase
 {
@@ -61,7 +61,7 @@ final class DatatablesTest extends TestCase
     /** @test */
     public function empty_request_without_query(): void
     {
-        $datatable = new Datatable(new PdoAdapter($this->pdo), new Options([]));
+        $datatable = new Datatables(new PDOAdapter($this->pdo), new Options([]));
         $response = $datatable->response();
 
         $this->assertResponse(0, 0, 0, $response);
@@ -263,9 +263,9 @@ final class DatatablesTest extends TestCase
         $this->assertIsArray($response['data']);
     }
 
-    public function datatable(): Datatable
+    public function datatable(): Datatables
     {
-        return (new Datatable(new PdoAdapter($this->pdo), new Options($this->request)))
+        return (new Datatables(new PDOAdapter($this->pdo), new Options($this->request)))
             ->from('customers as c')
             ->join('users as u', 'c.created_by', '=', 'u.id')
             ->select('c.id as id, c.name as name, c.age as age, u.name as created_by_name');

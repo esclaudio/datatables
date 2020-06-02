@@ -1,6 +1,6 @@
 <?php
 
-namespace Esclaudio\Datatables;
+namespace Esclaudio\Datatables\Database;
 
 use Esclaudio\Datatables\Query\Builder;
 

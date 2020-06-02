@@ -3,14 +3,14 @@
 namespace Esclaudio\Datatables;
 
 use Esclaudio\Datatables\Query\Builder;
-use Esclaudio\Datatables\DatabaseInterface;
+use Esclaudio\Datatables\Database\DatabaseInterface;
 
-class Datatable
+class Datatables
 {
     /**
      * Database
      *
-     * @var \Esclaudio\Datatables\DatabaseInterface
+     * @var \Esclaudio\Datatables\Database\DatabaseInterface
      */
     protected $db;
 
@@ -131,7 +131,7 @@ class Datatable
     {
         return $this->where($column, 'is not', $this->baseQuery->raw('null'));
     }
-    
+
     /**
      * @param string|array $column
      * @param string $type
@@ -202,13 +202,13 @@ class Datatable
     public function query(): ?Builder
     {
         if ( ! $this->baseQuery) return null;
-        
+
         $query = clone $this->baseQuery;
 
         $this->filter($query);
         $this->order($query);
         $this->limit($query);
-        
+
         return $query;
     }
 
@@ -287,7 +287,7 @@ class Datatable
 
         foreach ($searchableColumns as $column) {
             $columnSearch = $column->searchValue();
-            
+
             if ($columnSearch) {
                 $field = $queryFields[$column->name()] ?? null;
 
