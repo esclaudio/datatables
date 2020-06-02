@@ -5,7 +5,7 @@ namespace Esclaudio\Datatables\Tests;
 use PHPUnit\Framework\TestCase;
 use Esclaudio\Datatables\Options;
 use Esclaudio\Datatables\Datatables;
-use Esclaudio\Datatables\Database\PDOAdapter;
+use Esclaudio\Datatables\Database\Connection;
 
 final class DatatablesTest extends TestCase
 {
@@ -61,12 +61,12 @@ final class DatatablesTest extends TestCase
     /** @test */
     public function empty_request_without_query(): void
     {
-        $datatable = new Datatables(new PDOAdapter($this->pdo), new Options([]));
-        $response = $datatable->response();
+        $datatable = new Datatables(new Connection($this->pdo), new Options([]));
+        $response = $datatable->toArray();
 
         $this->assertResponse(0, 0, 0, $response);
 
-        $this->assertEmpty($response['data']);
+        $this->assertEquals([[0]], $response['data']);
     }
 
     /** @test */
@@ -74,7 +74,7 @@ final class DatatablesTest extends TestCase
     {
         $this->request = [];
 
-        $response = $this->datatable()->response();
+        $response = $this->datatable()->toArray();
 
         $this->assertResponse(0, self::TOTAL_RECORDS, self::TOTAL_RECORDS, $response);
         $this->assertCount(self::TOTAL_RECORDS, $response['data']);
@@ -87,7 +87,7 @@ final class DatatablesTest extends TestCase
     /** @test */
     public function simple_request(): void
     {
-        $response = $this->datatable()->response();
+        $response = $this->datatable()->toArray();
 
         $this->assertResponse(self::REQUEST_DRAW, self::TOTAL_RECORDS, self::TOTAL_RECORDS, $response);
         $this->assertLessThanOrEqual(self::REQUEST_LENGTH, count($response['data']));
@@ -102,7 +102,7 @@ final class DatatablesTest extends TestCase
     {
         $this->request['search']['value'] = 'f';
 
-        $response = $this->datatable()->response();
+        $response = $this->datatable()->toArray();
 
         $this->assertResponse(self::REQUEST_DRAW, self::TOTAL_RECORDS, 2, $response);
         $this->assertLessThanOrEqual(self::REQUEST_LENGTH, count($response['data']));
@@ -117,7 +117,7 @@ final class DatatablesTest extends TestCase
     {
         $this->request['columns'][self::REQUEST_COLUMN_CREATED_BY_NAME]['search']['value'] = 'claudio';
 
-        $response = $this->datatable()->response();
+        $response = $this->datatable()->toArray();
 
         $this->assertResponse(self::REQUEST_DRAW, self::TOTAL_RECORDS, 4, $response);
         $this->assertLessThanOrEqual(self::REQUEST_LENGTH, count($response['data']));
@@ -131,10 +131,10 @@ final class DatatablesTest extends TestCase
     public function add_column(): void
     {
         $response = $this->datatable()
-            ->add('action', function ($row) {
+            ->addColumn('action', function ($row) {
                 return '<a href="/test/' . $row['id'] . '">Edit</a>';
             })
-            ->response();
+            ->toArray();
 
         $first = reset($response['data']);
 
@@ -146,10 +146,10 @@ final class DatatablesTest extends TestCase
         $this->request = [];
 
         $response = $this->datatable()
-            ->add('action', function ($row) {
+            ->addColumn('action', function ($row) {
                 return '<a href="/test/' . $row['id'] . '">Edit</a>';
             })
-            ->response();
+            ->toArray();
 
         $first = reset($response['data']);
 
@@ -161,7 +161,7 @@ final class DatatablesTest extends TestCase
     {
         $response = $this->datatable()
             ->addRowId('id')
-            ->response();
+            ->toArray();
 
         $first = reset($response['data']);
 
@@ -173,10 +173,10 @@ final class DatatablesTest extends TestCase
     public function edit_column(): void
     {
         $response = $this->datatable()
-            ->edit('name', function ($row) {
+            ->editColumn('name', function ($row) {
                 return strtoupper($row['name']);
             })
-            ->response();
+            ->toArray();
 
         $first = reset($response['data']);
 
@@ -188,10 +188,10 @@ final class DatatablesTest extends TestCase
         $this->request = [];
 
         $response = $this->datatable()
-            ->edit('name', function ($row) {
+            ->editColumn('name', function ($row) {
                 return strtoupper($row['name']);
             })
-            ->response();
+            ->toArray();
 
         $first = reset($response['data']);
 
@@ -202,11 +202,11 @@ final class DatatablesTest extends TestCase
     public function hide_column(): void
     {
         $response = $this->datatable()
-            ->hide('id')
-            ->edit('name', function ($row) {
+            ->hideColumn('id')
+            ->editColumn('name', function ($row) {
                 return "$row[name] ($row[id])";
             })
-            ->response();
+            ->toArray();
 
         $first = reset($response['data']);
 
@@ -219,11 +219,11 @@ final class DatatablesTest extends TestCase
         $this->request = [];
 
         $response = $this->datatable()
-            ->hide('id')
-            ->edit('name', function ($row) {
+            ->hideColumn('id')
+            ->editColumn('name', function ($row) {
                 return "$row[name] ($row[id])";
             })
-            ->response();
+            ->toArray();
 
         $first = reset($response['data']);
 
@@ -241,7 +241,7 @@ final class DatatablesTest extends TestCase
             ],
         ];
 
-        $response = $this->datatable()->response();
+        $response = $this->datatable()->toArray();
 
         $first = reset($response['data']);
 
@@ -265,7 +265,7 @@ final class DatatablesTest extends TestCase
 
     public function datatable(): Datatables
     {
-        return (new Datatables(new PDOAdapter($this->pdo), new Options($this->request)))
+        return (new Datatables(new Connection($this->pdo), new Options($this->request)))
             ->from('customers as c')
             ->join('users as u', 'c.created_by', '=', 'u.id')
             ->select('c.id as id, c.name as name, c.age as age, u.name as created_by_name');

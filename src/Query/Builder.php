@@ -2,24 +2,23 @@
 
 namespace Esclaudio\Datatables\Query;
 
-use Esclaudio\Datatables\Query\Translator\TranslatorInterface;
-use Esclaudio\Datatables\Query\Translator\AnsiTranslator;
+use Esclaudio\Datatables\Query\Grammars\Grammar;
 
 class Builder
 {
     /**
-     * Translator
+     * Grammar
      *
-     * @var \Esclaudio\Datatables\Query\Translator\TranslatorInterface
+     * @var \Esclaudio\Datatables\Query\Grammars\Grammar
      */
-    protected $translator;
+    protected $grammar;
 
     /**
      * Table
      *
      * @var string
      */
-    protected $table;
+    protected $table = '';
 
     /**
      * Fields
@@ -77,14 +76,14 @@ class Builder
      */
     protected $length = 0;
 
-    public function __construct(TranslatorInterface $translator = null)
+    public function __construct(Grammar $grammar = null)
     {
-        $this->translator = $translator ?? new AnsiTranslator;
+        $this->grammar = $grammar ?? new Grammar;
     }
 
-    public function getTable(): ?string
+    public function getTable(): string
     {
-        return $this->table;
+        return $this->table ?? '';
     }
 
     public function getFields(): array
@@ -137,12 +136,6 @@ class Builder
     public function resetOrder(): self
     {
         $this->orders = [];
-        return $this;
-    }
-
-    public function setTranslator(TranslatorInterface $translator)
-    {
-        $this->translator = $translator;
         return $this;
     }
 
@@ -234,7 +227,7 @@ class Builder
         }
 
         if ($column instanceof \Closure) {
-            call_user_func($column, $query = new Builder($this->translator));
+            call_user_func($column, $query = new Builder($this->grammar));
 
             if ( ! empty($query->getWheres())) {
                 $this->wheres[] = [$type, $query];
@@ -349,7 +342,12 @@ class Builder
 
     public function sql(): string
     {
-        return $this->translator->translate($this);
+        return $this->grammar->compile($this);
+    }
+
+    public function __toString(): string
+    {
+        return $this->sql();
     }
 
     protected function addBinding($value)
@@ -361,10 +359,5 @@ class Builder
         }
 
         return $this;
-    }
-
-    public function __toString(): string
-    {
-        return $this->sql();
     }
 }

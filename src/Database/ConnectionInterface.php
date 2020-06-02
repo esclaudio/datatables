@@ -2,10 +2,12 @@
 
 namespace Esclaudio\Datatables\Database;
 
+use Esclaudio\Datatables\Query\Grammars\Grammar;
 use Esclaudio\Datatables\Query\Builder;
 
-interface DatabaseInterface
+interface ConnectionInterface
 {
     public function fetchAll(Builder $query): array;
     public function fetchColumn(Builder $query, int $column = 0);
+    public function grammar(): Grammar;
 }

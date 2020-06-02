@@ -17,11 +17,13 @@ composer require esclaudio/datatables
 ``` php
 use Esclaudio\Datatables\Datatables;
 use Esclaudio\Datatables\Options;
-use Esclaudio\Datatables\Database\PDOAdapter;
+use Esclaudio\Datatables\Database\Connection;
 
-$db = new PDOAdapter(new \PDO(...));
+$connection = new Connection(new \PDO(...));
 $options = new Options($_GET);
-$response = (new Datatables($db, $options))
+
+header('Content-Type: application/json');
+echo (new Datatables($connection, $options))
     ->from('posts')
     ->join('users', 'users.id', '=', 'posts.created_by')
     ->select([
@@ -29,7 +31,7 @@ $response = (new Datatables($db, $options))
         'posts.title as title',
         'users.name as creator',
     ])
-    ->response();
+    ->toJson(); // {"draw": 1, "recordsTotal": 1, "recordsFiltered": 1, "data": {...}}
 ```
 
 ## Testing

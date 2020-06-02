@@ -10,7 +10,7 @@ final class QueryTest extends TestCase
     /** @test */
     public function empty_query(): void
     {
-        $this->assertEquals('', (string)(new Builder));
+        $this->assertEquals('select 0', (string)(new Builder));
     }
 
     /** @test */

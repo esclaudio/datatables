@@ -4,6 +4,7 @@ namespace Esclaudio\Datatables;
 
 use Esclaudio\Datatables\Query\Builder;
 use Esclaudio\Datatables\Database\DatabaseInterface;
+use Esclaudio\Datatables\Database\Connection;
 
 class Datatables
 {
@@ -12,14 +13,14 @@ class Datatables
      *
      * @var \Esclaudio\Datatables\Database\DatabaseInterface
      */
-    protected $db;
+    protected $connection;
 
     /**
      * Base query
      *
      * @var \Esclaudio\Datatables\Query\Builder|null
      */
-    protected $baseQuery = null;
+    protected $baseQuery;
 
     /**
      * Options
@@ -49,11 +50,11 @@ class Datatables
      */
     protected $editedColumns = [];
 
-    public function __construct(DatabaseInterface $db, Options $options, Builder $query = null)
+    public function __construct(Connection $connection, Options $options, Builder $query = null)
     {
-        $this->db = $db;
+        $this->connection = $connection;
         $this->options = $options;
-        $this->baseQuery = $query ?? new Builder;
+        $this->baseQuery = $query ?? new Builder($connection->grammar());
     }
 
     public function from(string $table): self
@@ -164,7 +165,7 @@ class Datatables
         return $this;
     }
 
-    public function add(string $column, \Closure $callback): self
+    public function addColumn(string $column, \Closure $callback): self
     {
         $this->addedColumns[$column] = $callback;
         return $this;
@@ -172,24 +173,24 @@ class Datatables
 
     public function addRowId(string $column): self
     {
-        return $this->add('DT_RowId', function ($row) use ($column) {
+        return $this->addColumn('DT_RowId', function ($row) use ($column) {
             return 'row_' . $row[$column];
         });
     }
 
-    public function edit(string $column, \Closure $callback): self
+    public function editColumn(string $column, \Closure $callback): self
     {
         $this->editedColumns[$column] = $callback;
         return $this;
     }
 
-    public function hide(string $column): self
+    public function hideColumn(string $column): self
     {
         $this->hiddenColumns[] = $column;
         return $this;
     }
 
-    public function response(): array
+    public function toArray(): array
     {
         return [
             'draw'            => $this->options->draw(),
@@ -199,10 +200,13 @@ class Datatables
         ];
     }
 
-    public function query(): ?Builder
+    public function toJson(): string
     {
-        if ( ! $this->baseQuery) return null;
+        return json_encode($this->toArray());
+    }
 
+    public function getQuery(): Builder
+    {
         $query = clone $this->baseQuery;
 
         $this->filter($query);
@@ -214,8 +218,6 @@ class Datatables
 
     protected function data(): array
     {
-        if ( ! $query = $this->query()) return [];
-
         return array_map(function ($row) {
             $item = [];
 
@@ -236,47 +238,43 @@ class Datatables
             }
 
             return $item;
-        }, $this->db->fetchAll($query));
+        }, $this->connection->fetchAll($this->getQuery()));
     }
 
     protected function total(): int
     {
-        if ( ! $this->baseQuery) return 0;
-
         $query = clone $this->baseQuery;
 
         $query->selectRaw('count(*)')
             ->resetOrder()
             ->limit(0);
 
-        return (int)$this->db->fetchColumn($query);
+        return (int)$this->connection->fetchColumn($query);
     }
 
     protected function filteredTotal(): int
     {
-        if ( ! $this->baseQuery) return 0;
-
         $query = clone $this->baseQuery;
-
-        $this->filter($query);
-
+        
         $query->selectRaw('count(*)')
             ->resetOrder()
             ->limit(0);
 
-        return (int)$this->db->fetchColumn($query);
+        $this->filter($query);
+
+        return (int)$this->connection->fetchColumn($query);
     }
 
     protected function filter(Builder $query): void
     {
-        $queryFields = $this->fields($query);
+        $validFields = $this->validFields();
         $searchableColumns = $this->options->searchableColumns();
         $globalSearch = $this->options->searchValue();
 
         if ($searchableColumns && $globalSearch) {
-            $query->where(function ($query) use ($searchableColumns, $queryFields, $globalSearch) {
+            $query->where(function ($query) use ($searchableColumns, $validFields, $globalSearch) {
                 foreach ($searchableColumns as $column) {
-                    $field = $queryFields[$column->name()] ?? null;
+                    $field = $validFields[$column->name()] ?? null;
 
                     if ($field) {
                         $query->orWhere($field, 'like', "%$globalSearch%");
@@ -289,7 +287,7 @@ class Datatables
             $columnSearch = $column->searchValue();
 
             if ($columnSearch) {
-                $field = $queryFields[$column->name()] ?? null;
+                $field = $validFields[$column->name()] ?? null;
 
                 if ($field) {
                     $query->where($field, 'like', "%$columnSearch%");
@@ -300,10 +298,10 @@ class Datatables
 
     protected function order(Builder $query): void
     {
-        $queryFields = $this->fields($query);
+        $validFields = $this->validFields();
 
         foreach ($this->options->order() as $order) {
-            $field = $queryFields[$order->column()] ?? null;
+            $field = $validFields[$order->column()] ?? null;
 
             if ($field) {
                 if ($order->isAsc()) {
@@ -320,14 +318,14 @@ class Datatables
         $query->limit($this->options->start(), $this->options->length());
     }
 
-    protected function fields(Builder $query): array
+    protected function validFields(): array
     {
         $fields = [];
 
         // The reason to cast fields to string is because
         // there could be expression objects
 
-        foreach ($query->getFields() as $alias => $field) {
+        foreach ($this->baseQuery->getFields() as $alias => $field) {
             if (is_int($alias)) {
                 $alias = (string)$field;
             }
