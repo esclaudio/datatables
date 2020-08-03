@@ -248,6 +248,39 @@ final class DatatablesTest extends TestCase
         $this->assertEquals(11, $first['id']);
     }
 
+    /** @test */
+    public function it_can_inner_join(): void
+    {
+        $query = (new Datatables(new Connection($this->pdo), new Options($this->request)))
+            ->from('a')
+            ->join('b', 'a.id', '=', 'b.a_id')
+            ->getQuery();
+
+        $this->assertSame('select * from "a" inner join "b" on "a"."id" = "b"."a_id" limit 0, 5', (string)$query);
+    }
+
+    /** @test */
+    public function it_can_left_join(): void
+    {
+        $query = (new Datatables(new Connection($this->pdo), new Options($this->request)))
+            ->from('a')
+            ->leftJoin('b', 'a.id', '=', 'b.a_id')
+            ->getQuery();
+
+        $this->assertSame('select * from "a" left join "b" on "a"."id" = "b"."a_id" limit 0, 5', (string)$query);
+    }
+
+    /** @test */
+    public function it_can_right_join(): void
+    {
+        $query = (new Datatables(new Connection($this->pdo), new Options($this->request)))
+            ->from('a')
+            ->rightJoin('b', 'a.id', '=', 'b.a_id')
+            ->getQuery();
+
+        $this->assertSame('select * from "a" right join "b" on "a"."id" = "b"."a_id" limit 0, 5', (string)$query);
+    }
+
     public function assertResponse(int $draw, int $recordsTotal, int $recordsFiltered, array $response): void
     {
         $this->assertArrayHasKey('draw', $response);

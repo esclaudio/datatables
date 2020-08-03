@@ -83,7 +83,7 @@ class Datatables
 
     public function join(string $table, string $first, string $operator, string $second, string $type = 'inner'): self
     {
-        $this->baseQuery->join($table, $first, $operator, $second);
+        $this->baseQuery->join($table, $first, $operator, $second, $type);
 
         return $this;
     }
@@ -264,7 +264,7 @@ class Datatables
     protected function filteredTotal(): int
     {
         $query = clone $this->baseQuery;
-        
+
         $query->selectRaw('count(*)')
             ->resetOrder()
             ->limit(0);
