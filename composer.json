@@ -2,7 +2,7 @@
     "name": "esclaudio/datatables",
     "description": "Simple server side processing for datatables",
     "require": {
-        "php": "^7.2"
+        "php": "^7.2 || ^8.0"
     },
     "license": "MIT",
     "authors": [
