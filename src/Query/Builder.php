@@ -78,7 +78,7 @@ class Builder
 
     public function __construct(Grammar $grammar = null)
     {
-        $this->grammar = $grammar ?? new Grammar;
+        $this->grammar = $grammar ?? new Grammar();
     }
 
     public function getGrammar(): Grammar
@@ -130,7 +130,7 @@ class Builder
     {
         return $this->bindings;
     }
-    
+
     public function resetWhere(): self
     {
         $this->wheres = [];
@@ -284,7 +284,7 @@ class Builder
     {
         return $this->where($column, 'is not', $this->raw('null'));
     }
-    
+
     /**
      * @param string|array $column
      * @param string $type

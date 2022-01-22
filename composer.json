@@ -30,6 +30,6 @@
     "require-dev": {
         "phpunit/phpunit": "^8.5",
         "mockery/mockery": "1.3.x-dev",
-        "friendsofphp/php-cs-fixer": "^2.17@dev"
+        "friendsofphp/php-cs-fixer": "dev-master"
     }
 }

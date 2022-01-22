@@ -19,7 +19,7 @@ class Grammar
     {
         return $this->quoteSuffix;
     }
-    
+
     public function compile(Builder $query): string
     {
         if (! $query->getTable()) {
@@ -52,7 +52,7 @@ class Grammar
                 $build .= $this->wrap($field) . ' as ' . $this->wrap($alias) . ', ';
             }
         }
-        
+
         return substr($build, 0, -2);
     }
 
@@ -77,7 +77,7 @@ class Grammar
         if (! $wheres = $query->getWheres()) {
             return '';
         }
-        
+
         return ' ' . implode(' ', array_map(function ($where) {
             if ($where[1] instanceof Builder) {
                 return $where[0] . ' (' . substr($this->compileWhere($where[1]), 7) . ')';
@@ -100,7 +100,7 @@ class Grammar
         if (! $orders = $query->getOrders()) {
             return '';
         }
-        
+
         return ' order by ' . implode(', ', array_map(function ($order) {
             return $this->wrap($order[1]) . ' ' . $order[0];
         }, $orders));
@@ -111,7 +111,7 @@ class Grammar
         if (! $groups = $query->getGroups()) {
             return '';
         }
-        
+
         return ' group by ' . implode(', ', array_map([$this, 'wrap'], $groups));
     }
 
@@ -150,13 +150,13 @@ class Grammar
         if ($value instanceof Expression) {
             return (string)$value;
         }
-        
+
         if (is_object($value)) {
             throw new \Exception('Cannot wrap from class ' . get_class($value));
         }
 
         $value = trim($value);
-        
+
         if (false !== stripos($value, ' as ')) {
             $segments = preg_split('/\s+as\s+/i', $value);
 

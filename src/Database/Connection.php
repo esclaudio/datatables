@@ -54,7 +54,7 @@ class Connection implements ConnectionInterface
             throw new Exception("Unsupported driver $driver");
         }
 
-        return new $this->grammars[$driver];
+        return new $this->grammars[$driver]();
     }
 
     protected function execute(Builder $query): PDOStatement

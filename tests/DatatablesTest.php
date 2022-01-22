@@ -9,13 +9,13 @@ use PHPUnit\Framework\TestCase;
 
 final class DatatablesTest extends TestCase
 {
-    const REQUEST_DRAW = 1;
-    const REQUEST_LENGTH = 5;
-    const REQUEST_COLUMN_ID = 0;
-    const REQUEST_COLUMN_NAME = 1;
-    const REQUEST_COLUMN_AGE = 2;
-    const REQUEST_COLUMN_CREATED_BY_NAME = 3;
-    const TOTAL_RECORDS = 11;
+    public const REQUEST_DRAW = 1;
+    public const REQUEST_LENGTH = 5;
+    public const REQUEST_COLUMN_ID = 0;
+    public const REQUEST_COLUMN_NAME = 1;
+    public const REQUEST_COLUMN_AGE = 2;
+    public const REQUEST_COLUMN_CREATED_BY_NAME = 3;
+    public const TOTAL_RECORDS = 11;
 
     protected $pdo;
     protected $request;

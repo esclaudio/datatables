@@ -72,7 +72,7 @@ class Options
             if ($column && $column->orderable()) {
                 $this->order[] = new Order(
                     $column->name(),
-                    strtolower($order['dir']) === 'desc'? 'desc': 'asc'
+                    strtolower($order['dir']) === 'desc' ? 'desc' : 'asc'
                 );
             }
         }

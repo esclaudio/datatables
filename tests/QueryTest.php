@@ -41,9 +41,9 @@ abstract class QueryTest extends TestCase
         parent::setUp();
 
         if (array_key_exists($this->driver, $this->grammars)) {
-            $grammar = new $this->grammars[$this->driver];
+            $grammar = new $this->grammars[$this->driver]();
         } else {
-            $grammar = new Grammar;
+            $grammar = new Grammar();
         }
 
         $this->query = new Builder($grammar);
